@@ -5,10 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Page title</title>
     <link rel="stylesheet" href="./sass/index.scss" />
-    <script type="module" src="./index.js"></script>
+    <script type="module" src="./js/index.js"></script>
   </head>
   <body>
-    <!-- ❗️❗️❗️ Add partials like so for every page -->
-    <include src="./partials/example.html"></include>
+    <!-- <form class="search-form" id="search-form">
+      <input
+        type="text"
+        name="searchQuery"
+        autocomplete="off"
+        placeholder="Search images..."
+      />
+      <button type="submit">Search</button>
+    </form> -->
+    <nav class="navbar navbar-light bg-light justify-content-center">
+      <form class="d-flex search-form" id="search-form">
+        <input
+          class="form-control m-2"
+          type="search"
+          name="searchQuery"
+          autocomplete="off"
+          placeholder="Search images..."
+          aria-label="Search"
+        />
+        <button class="btn btn-outline-success m-2" type="submit">
+          Search
+        </button>
+      </form>
+    </nav>
+    <main>
+      <div class="gallery d-flex flex-wrap"></div>
+      <div class="d-flex justify-content-center my-3">
+        <button class="btn btn-primary d-none" type="button">load more</button>
+      </div>
+    </main>
   </body>
 </html>
