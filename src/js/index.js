@@ -1,72 +1,87 @@
-import { api } from './api';
+import { api, resetPage, addPage, page } from './api';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
-
+import { render } from './render';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 let searchTag = '';
 
 const refs = {
   form: document.querySelector('#search-form'),
   gallery: document.querySelector('.gallery'),
-  buttonMore: document.querySelector('.d-none'),
+  buttonMore: document.querySelector('.btn-primary'),
+  spinner: document.querySelector('.spinner-border'),
+  smallImg: document.querySelector('.photo-card__img'),
 };
-function render() {
-  api(searchTag).then(data => {
-    const markup = data
-      .map(hit => {
-        return `
-        <div class="col-sm-3 ">
-        <div class="photo-card card m-3">
-          <img
-            src="${hit.webformatURL}"
-            alt=""
-            loading="lazy"
-            class="card-img-top "
-
-          />
-          <div class="info card-body d-flex justify-content-between align-items-center" style="font-size: 13px">
-            <p class="info-item ">
-              <b>Likes</b>
-              <i>${hit.likes}</i>
-            </p>
-            <p class="info-item">
-              <b>Views</b>
-              <i>${hit.views}</i>
-            </p>
-            <p class="info-item">
-              <b>Comments</b>
-              <i>${hit.comments}</i>
-            </p>
-            <p class="info-item">
-              <b>Downloads</b>
-              <i>${hit.downloads}</i>
-            </p>
-          </div>
-        </div>
-      </div>
-
-    `;
-      })
-      .join('');
-    refs.gallery.insertAdjacentHTML('beforeend', markup);
-    refs.buttonMore.classList.remove('d-none');
-  });
+const addPart = card => {
+  refs.gallery.insertAdjacentHTML('beforeend', render(card));
+  refs.buttonMore.classList.remove('d-none');
+};
+function cleanInput() {
+  refs.gallery.innerHTML = '';
 }
-refs.form.addEventListener('submit', event => {
+function addLoader() {
+  refs.spinner.classList.remove('d-none');
+}
+function removeLoader() {
+  refs.spinner.classList.add('d-none');
+}
+function lastPage(res) {
+  if (Math.ceil(res.totalHits / 40) === page) {
+    Notify.failure(
+      `We're sorry, but you've reached the end of search results.`
+    );
+    refs.buttonMore.classList.add('d-none');
+  }
+}
+function onClickImg(event) {
   event.preventDefault();
-  restart();
-  searchTag = refs.form.elements.searchQuery.value;
+  if (event.target.nodeName !== 'IMG') {
+    return;
+  }
+  var lightbox = new SimpleLightbox('.gallery a', {
+    captions: true,
+    captionsData: 'alt',
+    captionDelay: 250,
+  });
+  console.log(lightbox);
+}
+refs.form.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  searchTag = refs.form.elements.searchQuery.value.trim();
   if (searchTag === '') {
     return Notify.failure(
       'Sorry, there are no images matching your search query. Please try again'
     );
   }
-  Notify.success('success');
-
-  render();
-});
-function restart() {
-  refs.gallery.innerHTML = '';
+  resetPage();
+  cleanInput();
+  addLoader();
   refs.buttonMore.classList.add('d-none');
-}
-refs.buttonMore.addEventListener('click', () => {
-  render();
+  api(searchTag).then(card => {
+    addPart(card);
+    removeLoader();
+    refs.buttonMore.classList.remove('d-none');
+    Notify.success(`Success operation, we are added ${card.totalHits} cards`);
+    lastPage(card);
+    // refs.smallImg.addEventListener();
+  });
 });
+refs.buttonMore.addEventListener('click', () => {
+  addPage();
+  api(searchTag).then(card => {
+    addPart(card);
+    lastPage(card);
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
+    });
+    lightbox().refresh();
+  });
+});
+
+refs.gallery.addEventListener('click', onClickImg);
